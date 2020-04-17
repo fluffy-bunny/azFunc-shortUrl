@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "StorageQueue_Sender": {
+      "commandName": "Project",
+      "commandLineArgs": " "
+    }
+  }
+}

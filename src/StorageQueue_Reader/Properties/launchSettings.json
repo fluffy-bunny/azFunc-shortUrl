@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "StorageQueue_Reader": {
+      "commandName": "Project",
+      "commandLineArgs": " "
+    }
+  }
+}

@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="3.1.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\dotnetcore.Simple.CosmosDB\dotnetcore.Simple.CosmosDB.csproj" />
+    <ProjectReference Include="..\dotnetcore.urlshortener.contracts\dotnetcore.urlshortener.contracts.csproj" />
+    <ProjectReference Include="..\dotnetcore.urlshortener.generator\dotnetcore.urlshortener.generator.csproj" />
+    <ProjectReference Include="..\dotnetcore.urlshortener.Utils\dotnetcore.urlshortener.Utils.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>webApp_urlshortener</RootNamespace>
+    <UserSecretsId>8f2d4ba7-29ee-45db-993a-d663842ae125</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="IdentityModel" Version="4.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\dotnetcore.urlshortener.contracts\dotnetcore.urlshortener.contracts.csproj" />
+    <ProjectReference Include="..\dotnetcore.urlshortener.CosmosDBStore\dotnetcore.urlshortener.CosmosDBStore.csproj" />
+    <ProjectReference Include="..\dotnetcore.urlshortener.generator\dotnetcore.urlshortener.generator.csproj" />
+    <ProjectReference Include="..\dotnetcore.urlshortener.InMemoryStore\dotnetcore.urlshortener.InMemoryStore.csproj" />
+    <ProjectReference Include="..\dotnetcore.urlshortener\dotnetcore.urlshortener.csproj" />
+    <ProjectReference Include="..\KeyVaultStores\KeyVaultStores.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,51 @@
+{
+	"data": {
+		"environment": "AzureCloud",
+		"scopeLevel": "Subscription",
+		"subscriptionId": "39ac48fb-fea0-486a-ba84-e0ae9b06c663",
+		"subscriptionName": "MUSE1-NS01",
+		"resourceGroupName": "",
+		"mlWorkspaceName": "",
+		"mlWorkspaceLocation": "",
+		"managementGroupId": "",
+		"managementGroupName": "",
+		"oboAuthorization": "",
+		"creationMode": "Automatic",
+		"azureSpnRoleAssignmentId": "",
+		"azureSpnPermissions": "",
+		"spnObjectId": "",
+		"appObjectId": "",
+		"resourceId": ""
+	},
+	"id": "89bbef9e-4c47-4ca8-98b6-aaa0d6ba315d",
+	"name": "shorturl",
+	"type": "azurerm",
+	"url": "https://management.azure.com/",
+	"createdBy": null,
+	"description": "",
+	"authorization": {
+		"parameters": {
+			"tenantid": "3b217a9b-6c58-428b-b022-5ad741ce2016",
+			"serviceprincipalid": "",
+			"authenticationType": "spnKey",
+			"scope": "/subscriptions/39ac48fb-fea0-486a-ba84-e0ae9b06c663/resourcegroups/rg-shorturl",
+			"serviceprincipalkey": null
+		},
+		"scheme": "ServicePrincipal"
+	},
+	"isShared": false,
+	"isReady": false,
+	"operationStatus": {
+		"state": "InProgress",
+		"statusMessage": ""
+	},
+	"owner": "library",
+	"serviceEndpointProjectReferences": [{
+		"projectReference": {
+			"id": "c6800d7a-bdc0-4ffb-8ff3-b7eb3e2e3cf2",
+			"name": "azfunc_shorturl"
+		},
+		"name": "shorturl",
+		"description": ""
+	}]
+}

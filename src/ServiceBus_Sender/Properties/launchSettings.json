@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "ServiceBus_Sender": {
+      "commandName": "Project"
+    }
+  }
+}
