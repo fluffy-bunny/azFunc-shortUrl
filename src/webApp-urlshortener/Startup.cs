@@ -81,11 +81,11 @@ namespace webApp_urlshortener
             {
                 _logger.LogInformation("ConfigureServices");
                 var nameKeyVault = "kv-shorturl2";
-//                var snCosmosConfigTemplate = "cosmosConfigTemplateProduction";
-//                var snCosmosPrimaryKey = "cosmosPrimaryKeyProduction";
+                var snCosmosConfigTemplate = "cosmosConfigTemplateProduction";
+                var snCosmosPrimaryKey = "cosmosPrimaryKeyProduction";
 
-                var snCosmosConfigTemplate = "cosmosConfigTemplateEmulator";
-                var snCosmosPrimaryKey = "cosmosPrimaryKeyEmulator";
+//                var snCosmosConfigTemplate = "cosmosConfigTemplateEmulator";
+//                var snCosmosPrimaryKey = "cosmosPrimaryKeyEmulator";
 
                 var cosmosPrimaryKeyVaultFetchStore = new SimpleStringKeyVaultFetchStore(
                                    new KeyVaultFetchStoreOptions<string>()
