@@ -5,3 +5,4 @@
 A dedicated project ([terraform-setup-azfunc-shorturl](https://github.com/fluffy-bunny/terraform-setup-azfunc-shorturl)) to terraform azure infrastructure is a prerequisite to hosting this application.  
 
 
+ 
