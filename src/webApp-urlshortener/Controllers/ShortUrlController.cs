@@ -47,6 +47,7 @@ namespace webApp_urlshortener.Controllers
         }
 
         [HttpDelete]
+        [Route("{key}")]
         public async Task<IActionResult> DeleteRecord(string key)
         {
             try

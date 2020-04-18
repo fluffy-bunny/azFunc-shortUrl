@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CosmosDB.Simple.Store.Configuration;
 using CosmosDB.Simple.Store.Extensions;
+using dotnetcore.keyvault.fetch;
 using dotnetcore.urlshortener.contracts;
 using dotnetcore.urlshortener.contracts.Models;
 using dotnetcore.urlshortener.CosmosDBStore.Extensions;
@@ -25,6 +26,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using webApp_urlshortener.Controllers;
+using webApp_urlshortener.Models;
 using webApp_urlshortener.Models.jwt_validation;
 
 namespace webApp_urlshortener
@@ -50,13 +52,17 @@ namespace webApp_urlshortener
             return System.Text.Encoding.UTF8.GetString(base64EncodedBytes);
         }
         public IConfiguration Configuration { get; }
-        private IWebHostEnvironment _env;
+        private IWebHostEnvironment _hostingEnvironment;
+        private ILogger _logger;
+        private Exception _exConfigureServices;
 
-
-        public Startup(IConfiguration configuration, IWebHostEnvironment env)
+        public Startup(IConfiguration configuration, IWebHostEnvironment hostingEnvironment)
         {
+            _logger = new LoggerBuffered(LogLevel.Debug);
+            _logger.LogInformation($"Create Startup {hostingEnvironment.ApplicationName} - {hostingEnvironment.EnvironmentName}");
+
+            _hostingEnvironment = hostingEnvironment;
             Configuration = configuration;
-            _env = env;
 
         }
         string SafeFetchSettings(string key)
@@ -71,31 +77,59 @@ namespace webApp_urlshortener
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(provider =>
-            {
-                var service = provider.GetRequiredService<ILogger<StartupLogger>>();
-                return new StartupLogger(service);
-            });
-            var logger = services.BuildServiceProvider().GetRequiredService<StartupLogger>();
-            logger.Log("Startup.ConfigureServices called");
             try
             {
+                _logger.LogInformation("ConfigureServices");
+                var nameKeyVault = "kv-shorturl2";
+//                var snCosmosConfigTemplate = "cosmosConfigTemplateProduction";
+//                var snCosmosPrimaryKey = "cosmosPrimaryKeyProduction";
+
+                var snCosmosConfigTemplate = "cosmosConfigTemplateEmulator";
+                var snCosmosPrimaryKey = "cosmosPrimaryKeyEmulator";
+
+                var cosmosPrimaryKeyVaultFetchStore = new SimpleStringKeyVaultFetchStore(
+                                   new KeyVaultFetchStoreOptions<string>()
+                                   {
+                                       ExpirationSeconds = 3600,
+                                       KeyVaultName = nameKeyVault,
+                                       SecretName = snCosmosPrimaryKey
+                                   }, _logger);
+                var primaryKey = cosmosPrimaryKeyVaultFetchStore.GetStringValueAsync().GetAwaiter().GetResult();
+
+                var cosmosKeyVaultOptions = new KeyVaultFetchStoreOptions<CosmosConfiguration>()
+                {
+                    ExpirationSeconds = 3600,
+                    KeyVaultName = nameKeyVault,
+                    SecretName = snCosmosConfigTemplate
+                };
+                var cosmosConfigurationKeyVaultFetchStore = new CosmosConfigurationKeyVaultFetchStore(cosmosKeyVaultOptions, _logger);
+                var cosmosConfiguration = cosmosConfigurationKeyVaultFetchStore.GetConfigurationAsync().GetAwaiter().GetResult();
+
+                cosmosConfiguration.PrimaryKey = cosmosConfiguration.PrimaryKey.Replace("{{primaryKey}}", primaryKey);
+                cosmosConfiguration.PrimaryConnectionString = cosmosConfiguration.PrimaryConnectionString.Replace("{{primaryKey}}", primaryKey);
+
+                var jwtValidateSettingsKeyVaultOptions = new KeyVaultFetchStoreOptions<JwtValidation>()
+                {
+                    ExpirationSeconds = 3600,
+                    KeyVaultName = nameKeyVault,
+                    SecretName = "jwtValidateSettings"
+                };
+                var JwtValidationKeyVaultFetchStore = new JwtValidationKeyVaultFetchStore(jwtValidateSettingsKeyVaultOptions, _logger);
+                var jwtValidation = JwtValidationKeyVaultFetchStore.GetConfigurationAsync().GetAwaiter().GetResult();
+
+
+                _logger.LogInformation($"primaryKey:{!string.IsNullOrEmpty(primaryKey)}");
+                _logger.LogInformation($"cosmosEndpointUri:{cosmosConfiguration.Uri}");
+
                 services.AddHttpClient();
-
                 services.AddControllers();
-                var jwt_validate_settings = SafeFetchSettings("jwt-validate-settings");
-                logger.Log($"jwt-validate-settings:{!string.IsNullOrEmpty(jwt_validate_settings)} - base64");
 
-                jwt_validate_settings = Base64Decode(jwt_validate_settings);
-                logger.Log($"jwt-validate-settings:{!string.IsNullOrEmpty(jwt_validate_settings)} - decoded");
-
-                var authenictation = JsonConvert.DeserializeObject<Authentication>(jwt_validate_settings);
-                logger.Log($"jwt-validate-settings:{authenictation != null} - JsonConvert.DeserializeObject");
-                var tok = authenictation.ToTokenValidationParameters();
+                _logger.LogInformation($"jwtValidateSettings:{jwtValidation != null} - JsonConvert.DeserializeObject");
+                var tok = jwtValidation.ToTokenValidationParameters();
                 services.AddAuthentication("Bearer")
                     .AddJwtBearer("Bearer", options =>
                     {
-                        options.Authority = authenictation.JwtValidation.Authority;
+                        options.Authority = jwtValidation.Authority;
                         options.RequireHttpsMetadata = false;
                         options.TokenValidationParameters = tok;
                     });
@@ -106,52 +140,34 @@ namespace webApp_urlshortener
                 // services.AddInMemoryUrlShortenerOperationalStore();
                 services.AddCosmosDBUrlShortenerOperationalStore();
 
-                // wellknown CosmosDB emulator for local development
-
-                string primaryKey = SafeFetchSettings("azFunc-shorturl-cosmos-primarykey");
-                string cosmosEndpointUri = SafeFetchSettings("azFunc-shorturl-cosmos-uri");
-                primaryKey = primaryKey ?? "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==";
-                cosmosEndpointUri = cosmosEndpointUri ?? "https://localhost:8081";
-
-                logger.Log($"primaryKey:{!string.IsNullOrEmpty(primaryKey)}");
-                logger.Log($"cosmosEndpointUri:{cosmosEndpointUri}");
-
-
                 TenantConfiguration tenantConfiguration = null;
                 try
                 {
-                    logger.Log($"SafeFetchSettings(\"azFunc-shorturl-client-credentials\")");
-                    var creds = SafeFetchSettings("azFunc-shorturl-client-credentials");
-                    logger.Log($"azFunc-shorturl-client-credentials:{!string.IsNullOrEmpty(creds)} - base64");
+                    _logger.LogInformation($"SafeFetchSettings(\"azFuncShorturlClientCredentials\")");
+                    var creds = SafeFetchSettings("azFuncShorturlClientCredentials");
+                    _logger.LogInformation($"azFuncShorturlClientCredentials:{!string.IsNullOrEmpty(creds)} - base64");
                     creds = Base64Decode(creds);
-                    logger.Log($"azFunc-shorturl-client-credentials:{!string.IsNullOrEmpty(creds)} - decoded");
+                    _logger.LogInformation($"azFuncShorturlClientCredentials:{!string.IsNullOrEmpty(creds)} - decoded");
                     tenantConfiguration = JsonConvert.DeserializeObject<TenantConfiguration>(creds);
-                    logger.Log($"tenantConfiguration ok");
+                    _logger.LogInformation($"tenantConfiguration ok");
                 }
                 catch (Exception e)
                 {
-                    logger.Log($"tenantConfiguration not ok, setting to null");
+                    _logger.LogInformation($"tenantConfiguration not ok, setting to null");
                     tenantConfiguration = null;
                 }
-                logger.Log($"SafeFetchSettings(\"keyvault-config\")");
-                string settingString = SafeFetchSettings("keyvault-config");
-                logger.Log($"keyvault-config:{!string.IsNullOrEmpty(settingString)} - base64");
-                settingString = Base64Decode(settingString);
-                logger.Log($"keyvault-config:{!string.IsNullOrEmpty(settingString)} - decoded");
 
-                var keyVaultConfiguration = JsonConvert.DeserializeObject<KeyVaultConfiguration>(settingString);
-                logger.Log($"keyVaultConfiguration ok");
-                services.AddKeyValutTenantStore(options =>
+                services.AddKeyVaultTenantStore(options =>
                 {
-                    options.ExpirationSeconds = keyVaultConfiguration.ExpirationSeconds;
-                    options.KeyVaultName = keyVaultConfiguration.KeyVaultName;
-                    options.SecretName = keyVaultConfiguration.SecretName;
+                    options.ExpirationSeconds = 3600;
+                    options.KeyVaultName = nameKeyVault;
+                    options.SecretName = "azFuncShorturlClientCredentials";
                     options.Value = tenantConfiguration; // ok if null.  If it is not null we don't go to key vault at all
                 });
 
                 services.AddSimpleItemStore<ShortUrlCosmosDocument>(options =>
                 {
-                    options.EndPointUrl = cosmosEndpointUri;
+                    options.EndPointUrl = cosmosConfiguration.Uri;
                     options.PrimaryKey = primaryKey;
                     options.DatabaseName = "shorturl";
                     options.Collection = new Collection()
@@ -163,7 +179,7 @@ namespace webApp_urlshortener
                 });
                 services.AddSimpleItemStore<ExpiredShortUrlCosmosDocument>(options =>
                 {
-                    options.EndPointUrl = cosmosEndpointUri;
+                    options.EndPointUrl = cosmosConfiguration.Uri;
                     options.PrimaryKey = primaryKey;
                     options.DatabaseName = "shorturl";
                     options.Collection = new Collection()
@@ -174,26 +190,35 @@ namespace webApp_urlshortener
 
                 });
             }
-            catch (Exception ex)
+            catch(Exception ex)
             {
-                logger.Log(ex.Message);
-                throw;
+                _exConfigureServices = ex;
+                // defer throw, because we need to log in the Configure() function.
             }
-
-
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(StartupLogger logger, IApplicationBuilder app, IWebHostEnvironment env,
-            IExpiredUrlShortenerOperationalStore expiredUrlShortenerOperationalStore)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env,
+            IServiceProvider serviceProvider,
+            ILogger<Startup> logger)
         {
             try
             {
-                logger.Log("Startup Configure...");
+                (_logger as LoggerBuffered).CopyToLogger(logger);
+                _logger = logger;
+                if (_exConfigureServices != null)
+                {
+                    // defered throw.
+                    throw _exConfigureServices;
+                }
+                _logger.LogInformation("Configure");
+
                 var section = Configuration.GetSection("InMemoryUrlShortenerExpiryOperationalStore");
                 var model = new InMemoryUrlShortenerConfigurationModel();
 
                 section.Bind(model);
+                var expiredUrlShortenerOperationalStore = serviceProvider.GetRequiredService<IExpiredUrlShortenerOperationalStore>();
+
 
                 foreach (var record in model.Records)
                 {
@@ -225,7 +250,8 @@ namespace webApp_urlshortener
             }
             catch (Exception ex)
             {
-                logger.Log($"Startup Configure {ex.Message}");
+                _logger.LogError($"{ex.Message}");
+                throw;
             }
         }
     }

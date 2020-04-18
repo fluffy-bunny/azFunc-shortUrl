@@ -1,7 +1,0 @@
-{
-  "profiles": {
-    "ServiceBus_Receiver": {
-      "commandName": "Project"
-    }
-  }
-}

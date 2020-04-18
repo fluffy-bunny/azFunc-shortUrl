@@ -24,8 +24,11 @@ namespace azFunc_urlshortener
             ILogger logger)
         {
             logger.LogInformation("C# HTTP trigger function processed a request.");
-            StartupGlobals.ExternalShimLogger = logger;
-            return await _functionsAppShim.Run(context, request, logger);
+            if(Global.LoggerProvider == null)
+            {
+                Global.LoggerProvider = await _functionsAppShim.Initialize(logger);
+            }
+            return await _functionsAppShim.Run(context, request);
         }
     }
 }

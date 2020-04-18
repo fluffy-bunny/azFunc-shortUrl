@@ -9,9 +9,9 @@ namespace dotnetcore.azFunction.AppShim
     public delegate void LoadConfigurationsDelegate(IConfigurationBuilder config, string environmentName);
     public interface IFunctionsAppShim
     {
+        Task<ILoggerProvider> Initialize(ILogger log);
         Task<HttpResponseMessage> Run(
             Microsoft.Azure.WebJobs.ExecutionContext context,
-            HttpRequest request,
-            ILogger log);
+            HttpRequest request);
     }
 }

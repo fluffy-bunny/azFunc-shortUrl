@@ -9,29 +9,23 @@ namespace webApp_urlshortener.Models.jwt_validation
 {
     public static class AuthenicationExtensions
     {
-        public static TokenValidationParameters ToTokenValidationParameters(this Authentication authentication)
+        public static TokenValidationParameters ToTokenValidationParameters(this JwtValidation jwtValidation)
         {
             var result = new TokenValidationParameters()
             {
-                ValidateAudience = authentication.JwtValidation.Options.ValidateAudience.Required,
-                ValidAudiences = authentication.JwtValidation.Options.ValidateAudience.ValidAudiences,
-                ValidateLifetime = authentication.JwtValidation.Options.ValidateLifetime.Required,
-                ValidateIssuer = authentication.JwtValidation.Options.ValidateIssuer.Required,
-                ValidIssuer = authentication.JwtValidation.Options.ValidateIssuer.ValidIssuer,
-                RequireSignedTokens = authentication.JwtValidation.Options.ValidateIssuerSigningKey.Required,
-                ValidateIssuerSigningKey = authentication.JwtValidation.Options.ValidateIssuerSigningKey.Required,
-                ClockSkew = new TimeSpan(0, authentication.JwtValidation.Options.ValidateLifetime.ClockSkewMin, 0)
+                ValidateAudience = jwtValidation.Options.Audience.Required,
+                ValidAudiences = jwtValidation.Options.Audience.ValidAudiences,
+                ValidateLifetime = jwtValidation.Options.Lifetime.Required,
+                ClockSkew = new TimeSpan(0, jwtValidation.Options.Lifetime.ClockSkewMin, 0),
+                ValidateIssuer = jwtValidation.Options.Issuer.Required,
+                ValidIssuer = jwtValidation.Options.Issuer.ValidIssuer,
+                RequireSignedTokens = jwtValidation.Options.SignedToken.Required,
+                ValidateIssuerSigningKey = jwtValidation.Options.Issuer.ValidateIssuerSigningKey
             };
             return result;
         }
 
     }
-    public partial class Authentication
-    {
-        [JsonProperty("jwt-validation")]
-        public JwtValidation JwtValidation { get; set; }
-    }
-
     public partial class JwtValidation
     {
         [JsonProperty("authority")]
@@ -43,49 +37,53 @@ namespace webApp_urlshortener.Models.jwt_validation
 
     public partial class Options
     {
-        [JsonProperty("validateAudience")]
-        public ValidateAudience ValidateAudience { get; set; }
+        [JsonProperty("audience")]
+        public Audience Audience { get; set; }
 
-        [JsonProperty("validateIssuer")]
-        public ValidateIssuer ValidateIssuer { get; set; }
+        [JsonProperty("issuer")]
+        public Issuer Issuer { get; set; }
 
-        [JsonProperty("validateLifetime")]
-        public ValidateLifetime ValidateLifetime { get; set; }
+        [JsonProperty("lifetime")]
+        public Lifetime Lifetime { get; set; }
 
-        [JsonProperty("validateIssuerSigningKey")]
-        public ValidateIssuerSigningKey ValidateIssuerSigningKey { get; set; }
+        [JsonProperty("signedToken")]
+        public SignedToken SignedToken { get; set; }
     }
 
-    public partial class ValidateAudience
+    public partial class Audience
     {
         [JsonProperty("required")]
         public bool Required { get; set; }
 
         [JsonProperty("validAudiences")]
-        public List<string> ValidAudiences { get; set; }
+        public string[] ValidAudiences { get; set; }
     }
 
-    public partial class ValidateIssuer
+    public partial class Issuer
     {
         [JsonProperty("required")]
         public bool Required { get; set; }
 
         [JsonProperty("validIssuer")]
         public string ValidIssuer { get; set; }
+
+        [JsonProperty("validateIssuerSigningKey")]
+        public bool ValidateIssuerSigningKey { get; set; }
+        
     }
 
-    public partial class ValidateIssuerSigningKey
-    {
-        [JsonProperty("required")]
-        public bool Required { get; set; }
-    }
-
-    public partial class ValidateLifetime
+    public partial class Lifetime
     {
         [JsonProperty("required")]
         public bool Required { get; set; }
 
         [JsonProperty("clockSkew-min")]
         public int ClockSkewMin { get; set; }
+    }
+
+    public partial class SignedToken
+    {
+        [JsonProperty("required")]
+        public bool Required { get; set; }
     }
 }

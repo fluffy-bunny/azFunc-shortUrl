@@ -16,6 +16,11 @@ namespace dotnetcore.azFunction.AppShim
     {
         public LoadConfigurationsDelegate LoadConfigurationsDelegate { get; set; }
         ITestServerHttpClient _testServerHttpClient;
+
+        public ILogger _logger { get; private set; }
+
+        private HostLoggerProvider _loggerProvider;
+
         ITestServerHttpClient FetchTestServerHttpClient(ExecutionContext context, ILogger logger)
         {
             if (_testServerHttpClient == null)
@@ -54,9 +59,13 @@ namespace dotnetcore.azFunction.AppShim
             }
             return _testServerHttpClient;
         }
-        public async Task<HttpResponseMessage> Run(ExecutionContext context, HttpRequest request, ILogger logger)
+        public async Task<HttpResponseMessage> Run(ExecutionContext context, HttpRequest request)
         {
-            var testServerHttpClient = FetchTestServerHttpClient(context, logger);
+            if(_logger == null)
+            {
+                throw new Exception("You must call Initialize(logger) first.");
+            }
+            var testServerHttpClient = FetchTestServerHttpClient(context, _logger);
 
             var httpRequestMessageFeature = new HttpRequestMessageFeature(request);
             var httpRequestMessage = httpRequestMessageFeature.HttpRequestMessage;
@@ -77,6 +86,16 @@ namespace dotnetcore.azFunction.AppShim
             httpRequestMessage.Headers.Remove("Host");
             var responseMessage = await testServerHttpClient.HttpClient.SendAsync(httpRequestMessage);
             return responseMessage;
+        }
+
+        public async Task<ILoggerProvider> Initialize(ILogger logger)
+        {
+            if(_loggerProvider == null)
+            {
+                _logger = logger;
+                _loggerProvider = new HostLoggerProvider("me-tenant", _logger);
+            }
+            return _loggerProvider;
         }
     }
 }

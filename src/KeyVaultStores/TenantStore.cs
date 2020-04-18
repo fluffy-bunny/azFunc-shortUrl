@@ -17,7 +17,7 @@ namespace KeyVaultStores
         private IHttpClientFactory _httpClientFactory;
 
         public TenantStore(
-            IOptions<KeyVaultClientStoreOptions<TenantConfiguration>> options,
+            IOptions<KeyVaultFetchStoreOptions<TenantConfiguration>> options,
             IHttpClientFactory httpClientFactory,
             ILogger<TenantConfiguration> logger) : base(options, logger)
         {
@@ -31,7 +31,7 @@ namespace KeyVaultStores
         {
             if (_discoveryCache == null)
             {
-                var value = await GetValueAsync();
+                var (fresh,value) = await GetValueAsync();
                 _discoveryCache = new DiscoveryCache(value.Authority, () => _httpClientFactory.CreateClient());
             }
             return _discoveryCache;
@@ -44,7 +44,7 @@ namespace KeyVaultStores
             {
                 return tenantServices;
             }
-            var value = await GetValueAsync();
+            var (fresh, value) = await GetValueAsync();
 
             var tenantConfig = (from item in value.Tenants
                                 where item.Name == tenant

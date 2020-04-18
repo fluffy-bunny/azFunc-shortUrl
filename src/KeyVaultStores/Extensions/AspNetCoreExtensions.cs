@@ -10,9 +10,9 @@ namespace KeyVaultStores.Extensions
 {
     public static class AspNetCoreExtensions
     {
-        public static IServiceCollection AddKeyValutTenantStore(
+        public static IServiceCollection AddKeyVaultTenantStore(
           this IServiceCollection services,
-          Action<KeyVaultClientStoreOptions<TenantConfiguration>> setupAction)
+          Action<KeyVaultFetchStoreOptions<TenantConfiguration>> setupAction)
         {
             services.Configure(setupAction);
             services.AddSingleton<ITenantStore, TenantStore>(); // We must explicitly register Foo
