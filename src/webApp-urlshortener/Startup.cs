@@ -28,6 +28,10 @@ using Newtonsoft.Json;
 using webApp_urlshortener.Controllers;
 using webApp_urlshortener.Models;
 using webApp_urlshortener.Models.jwt_validation;
+using Middleware.Hooks.Extensions;
+using ShorturlRequestUserTracker;
+using CorrelationId;
+using CorrelationId.DependencyInjection;
 
 namespace webApp_urlshortener
 {
@@ -189,6 +193,28 @@ namespace webApp_urlshortener
                     };
 
                 });
+
+                services.AddScopedRequestHook<ScopedRequestHook>();
+                if (_hostingEnvironment.IsDevelopment())
+                {
+                    services.Configure<MiddlewareOptions>(Configuration.GetSection("middleware"));
+                }
+                else
+                {
+                    // TODO, get from keyvault
+                }
+                // Example of adding default correlation ID (using the GUID generator) services
+                // As shown here, options can be configured via the configure degelate overload
+                services.AddDefaultCorrelationId(options =>
+                {
+                    options.AddToLoggingScope = true;
+                    options.EnforceHeader = false;
+                    options.IgnoreRequestHeader = false;
+                    options.IncludeInResponse = true;
+                    options.RequestHeader = "My-Custom-Correlation-Id";
+                    options.ResponseHeader = "X-Correlation-Id";
+                    options.UpdateTraceIdentifier = false;
+                });
             }
             catch(Exception ex)
             {
@@ -237,12 +263,15 @@ namespace webApp_urlshortener
                     app.UseDeveloperExceptionPage();
                 }
 
+                app.UseCorrelationId(); // adds the correlation ID middleware
 
                 app.UseRouting();
 
                 app.UseAuthentication();
                 app.UseAuthorization();
 
+                // AFTER AUTHORIZATION
+                app.UseEndpointWatcherHookMiddleware();
                 app.UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();
