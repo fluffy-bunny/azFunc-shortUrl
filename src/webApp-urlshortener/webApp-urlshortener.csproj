@@ -4,10 +4,13 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>webApp_urlshortener</RootNamespace>
     <UserSecretsId>8f2d4ba7-29ee-45db-993a-d663842ae125</UserSecretsId>
+    <ApplicationInsightsResourceId>/subscriptions/39ac48fb-fea0-486a-ba84-e0ae9b06c663/resourcegroups/rg-shorturl2/providers/microsoft.insights/components/appis-azfuncshorturl2</ApplicationInsightsResourceId>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CorrelationId" Version="3.0.0-preview.1" />
     <PackageReference Include="IdentityModel" Version="4.2.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.14.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.PerfCounterCollector" Version="2.14.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.3" />
   </ItemGroup>
   <ItemGroup>
@@ -19,6 +22,9 @@
     <ProjectReference Include="..\KeyVaultStores\KeyVaultStores.csproj" />
     <ProjectReference Include="..\ShorturlRequestUserTracker\ShorturlRequestUserTracker.csproj" />
     <ProjectReference Include="..\Middleware.Hooks\Middleware.Hooks.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services" />
   </ItemGroup>
 
 </Project>

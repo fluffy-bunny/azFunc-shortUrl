@@ -3,6 +3,7 @@ using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
 using Microsoft.Azure.KeyVault;
 using Microsoft.Azure.Services.AppAuthentication;
+using Newtonsoft.Json;
 using System;
 using System.Text;
 using System.Threading;
@@ -10,7 +11,11 @@ using System.Threading.Tasks;
 
 namespace EventHubsSender
 {
-
+    public class Message
+    {
+        public string Value { get; set; }
+        public int Count { get; set; }
+    }
     class Program
     {
         static string GuidS => Guid.NewGuid().ToString();
@@ -57,8 +62,14 @@ namespace EventHubsSender
 
                         for (int i = 0; i < 10; i++)
                         {
+                            var msg = new Message
+                            {
+                                Value = $"test -{GuidS}",
+                                Count = i
+                            };
+                            var json = JsonConvert.SerializeObject(msg);
                             // add events to the batch. only one in this case. 
-                            eventBatch.TryAdd(new EventData(Encoding.UTF8.GetBytes($"test-{GuidS}")));
+                            eventBatch.TryAdd(new EventData(Encoding.UTF8.GetBytes(json)));
                         }
 
 

@@ -144,7 +144,7 @@ namespace EventHubsProcessor_BasicCheckpointing
                 using var cancellationSource = new CancellationTokenSource();
                 cancellationSource.CancelAfter(TimeSpan.FromSeconds(30));
 
-                while ((!cancellationSource.IsCancellationRequested) && (eventIndex <= 10))
+                while ((!cancellationSource.IsCancellationRequested) && (eventIndex <= 1000))
                 {
                     await Task.Delay(TimeSpan.FromMilliseconds(250));
                 }

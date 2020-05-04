@@ -32,6 +32,8 @@ using Middleware.Hooks.Extensions;
 using ShorturlRequestUserTracker;
 using CorrelationId;
 using CorrelationId.DependencyInjection;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 
 namespace webApp_urlshortener
 {
@@ -84,12 +86,30 @@ namespace webApp_urlshortener
             try
             {
                 _logger.LogInformation("ConfigureServices");
+
+
+
+
                 var nameKeyVault = "kv-shorturl2";
                 var snCosmosConfigTemplate = "cosmosConfigTemplateProduction";
                 var snCosmosPrimaryKey = "cosmosPrimaryKeyProduction";
 
-//                var snCosmosConfigTemplate = "cosmosConfigTemplateEmulator";
-//                var snCosmosPrimaryKey = "cosmosPrimaryKeyEmulator";
+                //                var snCosmosConfigTemplate = "cosmosConfigTemplateEmulator";
+                //                var snCosmosPrimaryKey = "cosmosPrimaryKeyEmulator";
+
+                var instrumentationKeyKeyVaultFetchStore = new SimpleStringKeyVaultFetchStore(
+                                  new KeyVaultFetchStoreOptions<string>()
+                                  {
+                                      ExpirationSeconds = 3600,
+                                      KeyVaultName = nameKeyVault,
+                                      SecretName = "appis-azfuncshorturl2-instrumentation-key"
+                                  }, _logger);
+                var instrumentationKey = instrumentationKeyKeyVaultFetchStore.GetStringValueAsync().GetAwaiter().GetResult();
+                // The following line enables Application Insights telemetry collection.
+                services.AddApplicationInsightsTelemetry(instrumentationKey);
+                var telemetryClient = new TelemetryClient(new TelemetryConfiguration(){ 
+                    ConnectionString = $"InstrumentationKey={instrumentationKey}" });
+                services.AddSingleton<TelemetryClient>(telemetryClient);
 
                 var cosmosPrimaryKeyVaultFetchStore = new SimpleStringKeyVaultFetchStore(
                                    new KeyVaultFetchStoreOptions<string>()
@@ -216,7 +236,7 @@ namespace webApp_urlshortener
                     options.UpdateTraceIdentifier = false;
                 });
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _exConfigureServices = ex;
                 // defer throw, because we need to log in the Configure() function.
